@@ -1,0 +1,46 @@
+name: Build v2.0.0.2 module
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/build_v2_0_0_2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Magisk module
+        run: ./.github/tools/build.sh
+
+      - name: Verify bundled Tailscale version
+        run: |
+          unzip -p dist/Magisk-Tailscaled-v2.0.0.2-full.zip tailscale/bin/tailscaled-arm64 > /tmp/tailscaled-arm64
+          chmod +x /tmp/tailscaled-arm64
+          strings /tmp/tailscaled-arm64 | grep -m1 '1.102.3' || {
+            echo 'Expected Tailscale 1.102.3 marker not found in arm64 binary'
+            exit 1
+          }
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Magisk-Tailscaled-v2.0.0.2
+          path: dist/*.zip
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete v2.0.0.2 --yes 2>/dev/null || true
+          gh release create v2.0.0.2 dist/*.zip \
+            --repo gbthui/magisk-tailscaled \
+            --target main \
+            --title 'Magisk Tailscaled v2.0.0.2' \
+            --notes 'Uses Tailscale v1.102.3 Android binaries from gbthui/tailscale-android-cli.'
