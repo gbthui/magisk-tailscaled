@@ -19,14 +19,13 @@ jobs:
       - name: Build Magisk module
         run: ./.github/tools/build.sh
 
-      - name: Verify bundled Tailscale version
+      - name: Verify bundled Tailscale binary
         run: |
-          unzip -p dist/Magisk-Tailscaled-v2.0.0.2-full.zip tailscale/bin/tailscaled-arm64 > /tmp/tailscaled-arm64
-          chmod +x /tmp/tailscaled-arm64
-          strings /tmp/tailscaled-arm64 | grep -m1 '1.102.3' || {
-            echo 'Expected Tailscale 1.102.3 marker not found in arm64 binary'
-            exit 1
-          }
+          mkdir -p /tmp/expected
+          curl -fsSL https://github.com/gbthui/tailscale-android-cli/releases/download/v1.102.3-android/tailscale_1.102.3_arm64.tgz | tar -xz -C /tmp/expected
+          unzip -p dist/Magisk-Tailscaled-v2.0.0.2-full.zip tailscale/bin/tailscaled-arm64 > /tmp/bundled-tailscaled-arm64
+          cmp /tmp/expected/tailscaled /tmp/bundled-tailscaled-arm64
+          sha256sum /tmp/expected/tailscaled /tmp/bundled-tailscaled-arm64
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
