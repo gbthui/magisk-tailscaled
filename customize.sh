@@ -86,7 +86,7 @@ for f in "$TS_BIN_DIR"/*-"$ARCH"; do
 done
 
 [ -f "$TS_BIN_DIR/tailscaled" ] || {
-	gh_download "anasfanani/tailscale-android-cli" "tailscale_.*_${ARCH}\.tgz" || abort "error: Unable to download."
+	gh_download "gbthui/tailscale-android-cli" "tailscale_.*_${ARCH}\.tgz" || abort "error: Unable to download."
 	tar -xzf "$TMPDIR/$FILENAME" -C $TS_BIN_DIR || abort "error: Unable extract archive."
 }
 
@@ -113,7 +113,6 @@ set_perm_recursive "$MODPATH/system/bin/" 0 0 0755 0755 "u:object_r:system_file:
 set_perm "$MODPATH/service.sh" 0 0 0755 "u:object_r:system_file:s0"
 
 if [ ! -f "$SERVICE_DIR/tailscaled_service.sh" ]; then
-	# offer to move module scripts to general scripts
 	ui_print "-----------------------------------------------------------"
 	ui_print "- Do you want to move Module Scripts to General Scripts ?"
 	ui_print "- This option allows you to toggle the 'tailscaled' service"
