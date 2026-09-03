@@ -1,0 +1,61 @@
+name: Build v2.0.0.4 module
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/build_v2_0_0_4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for policy-routing-fixed Android CLI release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 90); do
+            BODY=$(gh api repos/gbthui/tailscale-android-cli/releases/tags/v1.102.3-android --jq '.body' 2>/dev/null || true)
+            if echo "$BODY" | grep -qi 'netd policy routing'; then
+              echo "Found policy-routing-fixed Android CLI release"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Fixed Android CLI release not found"
+          exit 1
+
+      - name: Build Magisk module
+        run: ./.github/tools/build.sh
+
+      - name: Verify bundled Tailscale binary
+        run: |
+          mkdir -p /tmp/ref
+          curl -fsSL https://github.com/gbthui/tailscale-android-cli/releases/download/v1.102.3-android/tailscale_1.102.3_arm64.tgz | tar -xz -C /tmp/ref
+          unzip -p dist/Magisk-Tailscaled-v2.0.0.4-full.zip tailscale/bin/tailscaled-arm64 > /tmp/bundled
+          cmp /tmp/ref/tailscaled /tmp/bundled
+          echo "Bundled arm64 binary matches policy-routing-fixed CLI release byte-for-byte"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Magisk-Tailscaled-v2.0.0.4
+          path: dist/*.zip
+
+      - name: Replace obsolete release and publish v2.0.0.4
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete v2.0.0.3 --yes --cleanup-tag --repo gbthui/magisk-tailscaled 2>/dev/null || true
+          gh release delete v2.0.0.4 --yes --cleanup-tag --repo gbthui/magisk-tailscaled 2>/dev/null || true
+          gh release create v2.0.0.4 dist/*.zip \
+            --repo gbthui/magisk-tailscaled \
+            --target main \
+            --title 'Magisk Tailscaled v2.0.0.4' \
+            --notes 'Tailscale v1.102.3 from gbthui/tailscale-android-cli. Fixes root-Android outbound control-plane routing by allowing bypass-marked tailscaled sockets to fall through to Android netd policy routing. Restores upstream Happy Eyeballs behavior.'
