@@ -1,7 +1,7 @@
 id=magisk-tailscaled
 name=Magisk Tailscaled
-version=v2.0.0.2
-versionCode=02000002
+version=v2.0.0.3
+versionCode=02000003
 author=gbthui
 description=Tailscale. The easiest, most secure way to use WireGuard and 2FA. Bundled from gbthui/tailscale-android-cli.
 updateJson=https://raw.githubusercontent.com/gbthui/magisk-tailscaled/main/update.json
