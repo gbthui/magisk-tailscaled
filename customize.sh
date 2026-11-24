@@ -71,7 +71,7 @@ if [ -d "$TS_DIR" ]; then
 	rm -rf "$TS_DIR/backups/$versionCode/" && mkdir -p "$TS_DIR/backups/$versionCode/"
 	for p in "$TS_DIR"/*; do
 		case "$(basename "$p")" in
-		ssh | certs | backups | tailscaled.state) ;;
+		ssh | certs | backups | tailscaled.state | profile-data | derpmap.cached.json) ;;
 		*)
 			mv -f -- "$p" "$TS_DIR/backups/$versionCode/"
 			;;

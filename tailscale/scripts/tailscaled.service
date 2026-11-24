@@ -142,11 +142,21 @@ program(){
 _tailscaled(){
   logdir="${TS_DIR}/run"
   command="${TS_DAEMON_CMD}"
+  update_mod_desc(){
+    [ -s "$TS_MOD_PROP" ] || return 0
+    tmp_prop="${TS_MOD_PROP}.tmp.$$"
+    if sed -E "s/^description=(\[[^]]*\][[:space:]]*)?/description=$1 /" "$TS_MOD_PROP" > "$tmp_prop" 2>/dev/null && grep -q '^id=' "$tmp_prop"; then
+      chmod 0644 "$tmp_prop" 2>/dev/null || true
+      mv -f "$tmp_prop" "$TS_MOD_PROP"
+    else
+      rm -f "$tmp_prop"
+    fi
+  }
   tailscaled_up(){
-    sed -Ei "s/^description=(\[.*][[:space:]]*)?/description=[ ⏲ $CURRENT_TIME | ✔ tailscaled service is running!!! ] /g" "$TS_MOD_PROP"
+    update_mod_desc "[ ⏲ $CURRENT_TIME | ✔ tailscaled service is running!!! ]"
   }
   tailscaled_down(){
-    sed -Ei "s/^description=(\[.*][[:space:]]*)?/description=[ ⏲ $CURRENT_TIME | ✘ tailscaled shutting down, service is stopped !!! ] /g" "$TS_MOD_PROP"
+    update_mod_desc "[ ⏲ $CURRENT_TIME | ✘ tailscaled shutting down, service is stopped !!! ]"
   }
   pre_up=""
   pre_down=""

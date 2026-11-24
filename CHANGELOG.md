@@ -1,3 +1,11 @@
+## v2.0.0.5
+
+- Update bundled Tailscale CLI to `v1.104.7` (`gbthui/tailscale-android-cli`, including Android FBE pre-unlock `DirectFileMode` fix and `TailControl` Taildrop completion broadcast)
+- Replace in-place `sed -Ei` on `module.prop` with atomic temp-file write and validation to prevent `module.prop` truncation on boot
+- Add legacy Android `/dev/net/tun` symlink guard in `service.sh` (for Android 10 devices that only expose `/dev/tun`)
+- Preserve `profile-data` and `derpmap.cached.json` across module reinstalls/upgrades
+- Fix `update.json` (`versionCode` as integer `2000005`), `version-bump.sh`, and `release.yml` (`gbthui/magisk-tailscaled` URLs and non-prerelease releases)
+
 ## v2.0.0.1
 
 - 429e1b0 build: fix version bump and add pre-release for build version

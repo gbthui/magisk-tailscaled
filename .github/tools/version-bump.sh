@@ -19,7 +19,7 @@ case $BUMP_TYPE in
 esac
 
 NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}.${BUILD}"
-NEW_VERSION_CODE=$(printf "%02d%02d%02d%02d" "$MAJOR" "$MINOR" "$PATCH" "$BUILD")
+NEW_VERSION_CODE=$((10#$MAJOR * 1000000 + 10#$MINOR * 10000 + 10#$PATCH * 100 + 10#${BUILD:-0}))
 
 # Get commits since last tag
 LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
@@ -47,18 +47,15 @@ fi
 sed -i "s/^version=.*/version=$NEW_VERSION/" module.prop
 sed -i "s/^versionCode=.*/versionCode=$NEW_VERSION_CODE/" module.prop
 
-# TODO: Remove update-arm.json and update-arm64.json, use single update.json instead
-# Update all JSON files
-for json_file in update.json update-arm.json update-arm64.json; do
-  jq --arg v "$NEW_VERSION" --arg vc "$NEW_VERSION_CODE" \
-    '.version = $v | .versionCode = $vc | .zipUrl = "https://github.com/anasfanani/Magisk-Tailscaled/releases/download/\($v)/Magisk-Tailscaled-\($v).zip" | .changelog = "https://raw.githubusercontent.com/anasfanani/Magisk-Tailscaled/master/CHANGELOG.md"' \
-    "$json_file" > "${json_file}.tmp" && mv "${json_file}.tmp" "$json_file"
-done
+# Update update.json
+jq --arg v "$NEW_VERSION" --argjson vc "$NEW_VERSION_CODE" \
+  '.version = $v | .versionCode = $vc | .zipUrl = "https://github.com/gbthui/magisk-tailscaled/releases/download/\($v)/Magisk-Tailscaled-\($v).zip" | .changelog = "https://raw.githubusercontent.com/gbthui/magisk-tailscaled/main/CHANGELOG.md"' \
+  update.json > update.json.tmp && mv update.json.tmp update.json
 
 echo "Bumped $BUMP_TYPE: v$CURRENT → $NEW_VERSION (code: $NEW_VERSION_CODE)"
 echo ""
 echo "Next steps:"
-echo "  git add module.prop update*.json CHANGELOG.md"
+echo "  git add module.prop update.json CHANGELOG.md"
 echo "  git commit -m 'Bump version to $NEW_VERSION'"
 echo "  git tag $NEW_VERSION"
 echo "  git push && git push --tags"
